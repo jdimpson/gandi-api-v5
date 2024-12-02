@@ -24,4 +24,4 @@ help() {
 	echo
 }
 
-getrecords "$GANDI_DYNADYNS_PAT" "echo3.info" "A"
+getrecords "$GANDI_DYNADYNS_PAT" "$MYDOMAIN" "A"
