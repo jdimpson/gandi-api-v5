@@ -1,9 +1,27 @@
 #!/bin/sh
 
-# this script uses the liveDNS API, not the Domain API, at least currently
-# https://api.gandi.net/docs/livedns/
-
 . ./gandi_v5_funcs.sh
+
+# someday I'll just learn to accept getopts
+while test $# -gt 0; do
+	if test "$1" = "-p"; then
+		export GANDI_DYNADNS_PAT="$2";
+		shift;
+	else
+		if test -z "$DOMAIN"; then
+			DOMAIN="$1";
+		else
+			if test -z "$HOST"; then
+				HOST="$1";
+			else
+				if test -z "$IP"; then
+					IP="$1";
+				fi
+			fi
+		fi
+	fi
+	shift;
+done
 
 VERBOSE=1
 
@@ -13,7 +31,8 @@ if test -z "$GANDI_DYNADNS_PAT"; then
 fi
 
 help() {
-	echo "Usage: $0 <domain name> <dynamic DNS hostname> [dynamic DNS IP address]" >&2;
+	echo "Usage: $0 [ -p PAT ] <domain name> <dynamic DNS hostname> [dynamic DNS IP address]" >&2;
+	echo "  -p PAT is optional, and lets you set the GANDI_DYNADNS_PAT environment variable from the command line (not recommended)".
 	echo "	Domain name must be the domain in Gandi where you are setting the dynamic DNS address"
 	echo "	Dynamic DNS hostname must be the unqualified name you want to associate with the IP address. The resulting fully qualified domain name will be <dynamic DNS hostname>.<domain name>."
 	echo "	The optional dynamic DNS IP address is the IP address that will be associated with the hostname. If you leave off this argument, then this script will use apinfo.io to try to figure out the desired IP address. That will only work if you are on the Internet, the apinfo.io service is still running and hasn't banned you for some reason, and you are running the script on a network in such a way that ipinfo.io sees the web request as coming from the IP address you want to associate with the hostname. Personally I prefer to remote into my NAT router and grab the IP address directly rather than rely on a third party. But it's easier."
@@ -24,4 +43,53 @@ help() {
 	echo
 }
 
-getrecords "$GANDI_DYNADYNS_PAT" "$MYDOMAIN" "A"
+getip() {
+	curl -sS "https://ipinfo.io" | jq -r -e .ip;
+}
+
+if test -z "$DOMAIN"; then
+	echo "DOMAIN has not been set" >&2;
+	help >&2;
+	exit 4;
+fi
+
+if test -z "$HOST"; then
+	echo "HOST has not been set" >&2;
+	help >&2;
+	exit 5;
+fi
+
+if test -z "$IP"; then
+	echo "Looking for IP address" >&2;
+	IP=$(getip);
+fi
+
+echo "IP address for $HOST.$DOMAIN will be set to $IP if needed." >&2;
+
+RECS=$(getrecords "$GANDI_DYNADYNS_PAT" "$DOMAIN" "A")
+if echo "$RECS" | jq -e '.object == "HTTPNotFound"' >/dev/null 2>&1; then
+	# invalid domain?
+	echo "Could not list records because the resource was not found. Domain $DOMAIN invalid or empty?." >&2;
+	help >&2;
+	exit 2;
+fi
+
+if echo "$RECS" | jq -e '.message | startswith("You must provide an access token")' > /dev/null 2>&1; then
+	echo "Could not list records because the Personal Access Token in GANDI_DYNADNS_PAT is invalid" >*2;
+	help >&2;
+	exit 3;
+fi
+
+#echo $RECS | jq .;
+REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")')
+if ! test $? -eq 0; then
+	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
+else
+	echo "Found record for host $HOST" >&2;
+	CURRIP=$(echo "$REC" | jq -r -e .rrset_values[]);
+	if test "$CURRIP" = "$IP"; then
+		echo "$HOST.$DOMAIN already has IP $CURRIP, no change needed" >&2;
+	else
+		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
+	fi
+fi
