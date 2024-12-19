@@ -37,7 +37,7 @@ getrecords() {
 
 	curl -sS \
 	  "$URL" \
-	  -H "Authorization: Bearer $GANDI_DYNADNS_PAT" \
+	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" 
 	echo;
 }
@@ -49,7 +49,7 @@ gethostrecord() {
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM"
 	curl -sS \
 	  "$URL" \
-	  -H "Authorization: Bearer $GANDI_DYNADNS_PAT" \
+	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" 
 	echo;
 
@@ -69,7 +69,7 @@ createhostrecord() {
 
 	curl -sS -X POST \
 	  "$URL" \
-	  -H "Authorization: Bearer $GANDI_DYNADNS_PAT" \
+	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" -d '{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
 	echo;
 }
@@ -88,7 +88,7 @@ updatehostrecord() {
 
 	curl -sS -X PUT \
 	  "$URL" \
-	  -H "Authorization: Bearer $GANDI_DYNADNS_PAT" \
+	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" -d '{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
 	echo;
 }
