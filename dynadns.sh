@@ -90,6 +90,11 @@ fi
 #echo $RECS | jq .;
 REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")')
 if ! test $? -eq 0; then
+	if echo "$RECS" | jq -e '.[] | select(.status == "error")'; then
+		echo "Error querying gandi for $HOST, aborting" >&2;
+		echo "$RECS" | jq . >&2;
+		exit 7;
+	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
 else
 	echo "Found record for host $HOST" >&2;
