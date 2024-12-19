@@ -96,7 +96,8 @@ if ! test $? -eq 0; then
 		exit 7;
 	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
-	createhostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A"
+	OUT=$(createhostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+	echo "$OUT" | jq -r .message
 else
 	echo "Found record for host $HOST" >&2;
 	CURRIP=$(echo "$REC" | jq -r -e .rrset_values[]);
@@ -104,5 +105,7 @@ else
 		echo "$HOST.$DOMAIN already has IP $CURRIP, no change needed" >&2;
 	else
 		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
+		OUT=$(updatehostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+		echo "$OUT" | jq -r .message
 	fi
 fi
