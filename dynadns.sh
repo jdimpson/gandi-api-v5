@@ -90,7 +90,7 @@ fi
 #echo $RECS | jq .;
 REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")')
 if ! test $? -eq 0; then
-	if echo "$RECS" | jq -e '.[] | select(.status == "error")'; then
+	if echo "$RECS" | jq -e 'select(.status == "error")' > /dev/null; then
 		echo "Error querying gandi for $HOST, aborting" >&2;
 		echo "$RECS" | jq . >&2;
 		exit 7;
