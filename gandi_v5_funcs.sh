@@ -4,7 +4,7 @@
 # https://api.gandi.net/docs/livedns/
 
 haserrors() {
-	jq -e 'select(.status == "error")' > /dev/null
+	jq -e 'select(.status == "error")' > /dev/null 2>&1;
 }
 
 errorreasons() {
