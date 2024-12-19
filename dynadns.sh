@@ -1,6 +1,13 @@
 #!/bin/sh
 
-. ./gandi_v5_funcs.sh
+THISDIR="$(dirname "$(readlink -f "$0")")"
+GANDI_FUNCS="gandi_v5_funcs.sh"
+if test -r "$THISDIR/$GANDI_FUNCS"; then
+	. "$THISDIR/$GANDI_FUNCS"
+else
+	echo "Cannot find $GANDI_FUNCS; it should be in the same folder as this script ($THIDIR)" >&2;
+	exit 6;
+fi
 
 # someday I'll just learn to accept getopts
 while test $# -gt 0; do
