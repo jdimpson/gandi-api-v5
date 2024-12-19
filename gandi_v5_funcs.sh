@@ -3,6 +3,14 @@
 # this script uses the liveDNS API, not the Domain API, at least currently
 # https://api.gandi.net/docs/livedns/
 
+haserrors() {
+	jq -e 'select(.status == "error")' > /dev/null
+}
+
+errorreasons() {
+	jq -r '.errors[].description'
+}
+
 getrecords() {
 	local PAT="$1";
 	local DOM="$2";

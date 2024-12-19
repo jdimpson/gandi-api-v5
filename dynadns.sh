@@ -88,12 +88,11 @@ if echo "$RECS" | jq -e '.message | startswith("You must provide an access token
 fi
 
 #echo $RECS | jq .;
-REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")')
+REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")' 2>/dev/null )
 if ! test $? -eq 0; then
-	if echo "$RECS" | jq -e 'select(.status == "error")' > /dev/null; then
-		REAS=$(echo "$RECS" | jq -r '.errors[].description' )
+	if echo "$RECS" | haserrors; then
 		echo "Error querying gandi for $HOST, aborting" >&2;
-		echo "$REAS" >&2;
+		echo "$RECS" | errorreasons >&2;
 		exit 7;
 	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
