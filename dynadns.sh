@@ -106,6 +106,11 @@ else
 	else
 		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
 		OUT=$(updatehostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+		if haserrors "$OUT"; then
+			echo "Failed to change record $HOST" >&2;
+			echo "$OUT" | errorreasons
+			exit 8;
+		fi
 		echo "$OUT" | jq -r .message
 	fi
 fi

@@ -4,11 +4,24 @@
 # https://api.gandi.net/docs/livedns/
 
 haserrors() {
-	jq -e 'select(.status == "error")' > /dev/null 2>&1;
+	local STR="$1";
+	local jqstr='select(.status == "error")';
+
+	if test -z "$STR"; then
+		jq -e "$jqstr" > /dev/null 2>&1;
+	else
+		echo "$STR" | jq -e "$jqstr" > /dev/null 2>&1;
+	fi
 }
 
 errorreasons() {
-	jq -r '.errors[].description'
+	local STR="$1";
+	local jqstr='.errors[].description'
+	if test -z "$STR"; then
+		jq -r "$jqstr" 2> /dev/null;
+	else
+		echo "$STR" | jq -r "$jqstr" 2> /dev/null;
+	fi
 }
 
 getrecords() {
