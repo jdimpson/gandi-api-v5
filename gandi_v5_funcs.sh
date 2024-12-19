@@ -80,6 +80,8 @@ updatehostrecord() {
 	local IP="$4";
 	local TYP="$5";
 
+	# XXX: this only supports setting a single record of single type. would be nice to handle mutiple records
+
 	if test -z "$TYP"; then
 		TYP="A";
 	fi
@@ -89,7 +91,7 @@ updatehostrecord() {
 	curl -sS -X PUT \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
-	  -H "Content-type: application/json" -d '{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
+	  -H "Content-type: application/json" -d '{"items":[{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}]}'
 	echo;
 }
 

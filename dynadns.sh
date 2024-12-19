@@ -72,8 +72,7 @@ if test -z "$IP"; then
 fi
 
 echo "IP address for $HOST.$DOMAIN will be set to $IP if needed." >&2;
-
-RECS=$(getrecords "$GANDI_DYNADYNS_PAT" "$DOMAIN" "A")
+RECS=$(getrecords "$GANDI_DYNADNS_PAT" "$DOMAIN" "A")
 if echo "$RECS" | jq -e '.object == "HTTPNotFound"' >/dev/null 2>&1; then
 	# invalid domain?
 	echo "Could not list records because the resource was not found. Domain $DOMAIN invalid or empty?." >&2;
@@ -82,7 +81,7 @@ if echo "$RECS" | jq -e '.object == "HTTPNotFound"' >/dev/null 2>&1; then
 fi
 
 if echo "$RECS" | jq -e '.message | startswith("You must provide an access token")' > /dev/null 2>&1; then
-	echo "Could not list records because the Personal Access Token in GANDI_DYNADNS_PAT is invalid" >*2;
+	echo "Could not list records because the Personal Access Token in GANDI_DYNADNS_PAT is invalid" >&2;
 	help >&2;
 	exit 3;
 fi
@@ -90,14 +89,14 @@ fi
 #echo $RECS | jq .;
 REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")' 2>/dev/null )
 if ! test $? -eq 0; then
-	if echo "$RECS" | haserrors; then
+	if  haserrors "$RECS"; then
 		echo "Error querying gandi for $HOST, aborting" >&2;
-		echo "$RECS" | errorreasons >&2;
+		errorreasons "$RECS" >&2;
 		exit 7;
 	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
-	OUT=$(createhostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
-	echo "$OUT" | jq -r .message
+	OUT=$(createhostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+	echo "$OUT" | jq -r .message >&2;
 else
 	echo "Found record for host $HOST" >&2;
 	CURRIP=$(echo "$REC" | jq -r -e .rrset_values[]);
@@ -105,12 +104,12 @@ else
 		echo "$HOST.$DOMAIN already has IP $CURRIP, no change needed" >&2;
 	else
 		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
-		OUT=$(updatehostrecord "$GANDI_DYNADYNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+		OUT=$(updatehostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
 		if haserrors "$OUT"; then
 			echo "Failed to change record $HOST" >&2;
-			echo "$OUT" | errorreasons
+			echo "$OUT" | errorreasons >&2;
 			exit 8;
 		fi
-		echo "$OUT" | jq -r .message
+		echo "$OUT" | jq -r .message >&2;
 	fi
 fi
