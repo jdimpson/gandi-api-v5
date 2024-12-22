@@ -40,7 +40,7 @@ fi
 help() {
 cat << HERE >&2;
 Usage: $0 [ -p PAT ] <domain name> <dynamic DNS hostname> [dynamic DNS IP address]
-  -p PAT is optional, and lets you set the GANDI_DYNADNS_PAT environment variable from the command line (not recommended)
+	-p PAT is optional, and lets you set the GANDI_DYNADNS_PAT environment variable from the command line (not recommended)
 	Domain name must be the domain in Gandi where you are setting the dynamic DNS address
 	Dynamic DNS hostname must be the unqualified name you want to associate with the IP address. The resulting fully qualified domain name will be <dynamic DNS hostname>.<domain name>.
 	The optional dynamic DNS IP address is the IP address that will be associated with the hostname. If you leave off this argument, then this script will use apinfo.io to try to figure out the desired IP address. That will only work if you are on the Internet, the apinfo.io service is still running and hasn't banned you for some reason, and you are running the script on a network in such a way that ipinfo.io sees the web request as coming from the IP address you want to associate with the hostname. Personally I prefer to remote into my NAT router and grab the IP address directly rather than rely on a third party. But it's easier.
