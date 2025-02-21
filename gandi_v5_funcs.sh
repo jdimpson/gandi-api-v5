@@ -24,6 +24,26 @@ errorreasons() {
 	fi
 }
 
+hashttpcode() {
+	local STR="$1";
+	local jqstr='select(.code)';
+
+	if test -z "$STR"; then
+		jq -e "$jqstr" > /dev/null 2>&1;
+	else
+		echo "$STR" | jq -e "$jqstr" > /dev/null 2>&1;
+	fi
+}
+gethttpcode() {
+	local STR="$1";
+	local jqstr='.code';
+	if test -z "$STR"; then
+		jq -r "$jqstr" 2> /dev/null;
+	else
+		echo "$STR" | jq -r "$jqstr" 2> /dev/null;
+	fi
+}
+
 getrecords() {
 	local PAT="$1";
 	local DOM="$2";
@@ -67,10 +87,12 @@ createhostrecord() {
 
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM" \
 
+	DATA='{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
+
 	curl -sS -X POST \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
-	  -H "Content-type: application/json" -d '{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
+	  -H "Content-type: application/json" -d "$DATA";
 	echo;
 }
 updatehostrecord() {
