@@ -59,7 +59,9 @@ getrecords() {
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" 
+	local R="$?";
 	echo;
+	return $R;
 }
 
 gethostrecord() {
@@ -71,8 +73,9 @@ gethostrecord() {
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" 
+	local R="$?";
 	echo;
-
+	return $R;
 }
 createhostrecord() {
 	local PAT="$1";
@@ -85,15 +88,16 @@ createhostrecord() {
 		TYP="A";
 	fi
 
-	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM" \
-
+	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM";
 	DATA='{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
 
 	curl -sS -X POST \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" -d "$DATA";
+	local R="$?";
 	echo;
+	return $R;
 }
 updatehostrecord() {
 	local PAT="$1";
@@ -108,12 +112,33 @@ updatehostrecord() {
 		TYP="A";
 	fi
 
-	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM" \
-
+	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM";
 	curl -sS -X PUT \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
 	  -H "Content-type: application/json" -d '{"items":[{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}]}'
+	local R="$?";
 	echo;
+	return $R;
+}
+deletehostrecord() {
+	local PAT="$1";
+	local DOM="$2";
+	local NAM="$3";
+	local TYP="$4";
+
+	if test -z "$TYP"; then
+		echo "ERROR: this function will not delete all host records. You must provide a type." >&2;
+		exit 100;
+	fi
+
+	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM/$TYP";
+
+	curl -sS -X DELETE\
+	  "$URL" \
+	  -H "Authorization: Bearer $PAT";
+	local R="$?";
+	echo;
+	return $R;
 }
 
