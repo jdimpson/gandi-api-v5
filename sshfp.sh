@@ -9,20 +9,25 @@ else
 	exit 6;
 fi
 
+DELETE=
 # someday I'll just learn to accept getopts
 while test $# -gt 0; do
 	if test "$1" = "-p"; then
 		export GANDI_DYNADNS_PAT="$2";
 		shift;
 	else
-		if test -z "$HOST"; then
-			HOST="$1";
+		if test "$1" = "-D"; then
+			DELETE=1;
 		else
-			if test -z "$DOMAIN"; then
-				DOMAIN="$1";
+			if test -z "$HOST"; then
+				HOST="$1";
 			else
-				if test -z "$FILE"; then
-					FILE="$1";
+				if test -z "$DOMAIN"; then
+					DOMAIN="$1";
+				else
+					if test -z "$FILE"; then
+						FILE="$1";
+					fi
 				fi
 			fi
 		fi
@@ -39,15 +44,18 @@ fi
 
 help() {
 cat << HERE >&2;
-Usage: $0 [ -p PAT ] <ssh server name> <domain name> [ssh server key file]
+Usage: $0 [ -p PAT ] [-D] <ssh server name> <domain name> [ssh server key file]
+
+Where
 	-p PAT is optional, and lets you set the GANDI_DYNADNS_PAT environment variable from the command line (not recommended)
+	-D is optional, and will delete the SSHFP record for the ssh sever.
 	ssh server name is the unqualified host name of the SSH server for which you want to create SSHFP records. This lets you use VerifyHostKeyDNS option in your SSH client program.  ssh server name must already have host name domain record in Gandi 
 	domain name is the DNS domain name you have at Gandi, and for which your PAT is valid.
 	ssh server key file is an optional file containing the desired SSH key to be added to the SSHFP record. If it is ommitted, the host will be directly contacted to get all of it's host keys, and a record will be made for each one.
 
 You must have GANDI_DYNADNS_PAT set as an environment variable, containing the PAT from your Gandi domain hosting account.
 You must ssh-keygen installed.
-You must have curl installed (will someday do wget).
+You must have curl installed.
 You must have jq installed.
 
 HERE
@@ -80,6 +88,12 @@ fi
 F=
 if ! test -z "$FILE"; then
 	F="-f $FILE";
+fi
+
+if ! test -z "$DELETE"; then
+	echo "Deleting all SSHFP records for $FQDN" >&2;
+	deletehostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "SSHFP";
+	exit 0;
 fi
 
 # this is a bad hack. Need to work out way to naturally provide json strings to the gandi-api-v5 functions
@@ -116,7 +130,7 @@ fi
 RES=$(echo "$OUT" | jq -r .message);
 
 echo "$RES" >&2;
-if test "$RES" -eq "DNS Record Created"; then
+if test "$RES" = "DNS Record Created"; then
 	exit 0;
 else
 	exit 3;
