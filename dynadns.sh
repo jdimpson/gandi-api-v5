@@ -73,8 +73,29 @@ if test -z "$IP"; then
 	IP=$(getip);
 fi
 
+lookslike_ipv4() {
+	local IP="$1";
+	echo "$IP" | grep -q '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*';
+}
+lookslike_ipv6() {
+	local IP="$1";
+	echo "$IP" | grep -q '[0-9abcdef][0-9abcdef:\/]*';
+}
+
+
+if lookslike_ipv4 "$IP"; then
+	RECORD="A";
+else
+	if lookslike_ipv6 "$IP"; then
+		RECORD="AAAA";
+	else
+		echo "IP address $IP is not recognized as IPv4 or IPv6 (this may be a bug, sorry)" >&2;
+		exit 9;
+	fi
+fi
+
 echo "IP address for $HOST.$DOMAIN will be set to $IP if needed." >&2;
-RECS=$(getrecords "$GANDI_DYNADNS_PAT" "$DOMAIN" "A")
+RECS=$(getrecords "$GANDI_DYNADNS_PAT" "$DOMAIN" "$RECORD")
 if echo "$RECS" | jq -e '.object == "HTTPNotFound"' >/dev/null 2>&1; then
 	# invalid domain?
 	echo "Could not list records because the resource was not found. Domain $DOMAIN invalid or empty?." >&2;
@@ -97,7 +118,7 @@ if ! test $? -eq 0; then
 		exit 7;
 	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
-	OUT=$(createhostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+	OUT=$(createhostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "$RECORD");
 	echo "$OUT" | jq -r .message >&2;
 else
 	echo "Found record for host $HOST" >&2;
@@ -106,7 +127,7 @@ else
 		echo "$HOST.$DOMAIN already has IP $CURRIP, no change needed" >&2;
 	else
 		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
-		OUT=$(updatehostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "A");
+		OUT=$(updatehostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "$RECORD");
 		if haserrors "$OUT"; then
 			echo "Failed to change record $HOST" >&2;
 			echo "$OUT" | errorreasons >&2;
