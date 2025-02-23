@@ -30,7 +30,7 @@ while test $# -gt 0; do
 	shift;
 done
 
-VERBOSE=1
+#VERBOSE=1
 
 if test -z "$GANDI_DYNADNS_PAT"; then
 	echo "Please set env variable GANDI_DYNADNS_PAT to the Personal Access Token in your Gandi account that you intend to use for dyanamic DNS" >&2;
@@ -112,13 +112,18 @@ fi
 #echo $RECS | jq .;
 REC=$(echo "$RECS" | jq -e '.[] | select(.rrset_name == "'$HOST'")' 2>/dev/null )
 if ! test $? -eq 0; then
-	if  haserrors "$RECS"; then
+	if  haserror "$RECS"; then
 		echo "Error querying gandi for $HOST, aborting" >&2;
 		errorreasons "$RECS" >&2;
 		exit 7;
 	fi
 	echo "No record found for host $HOST, need to create, with IP set to $IP" >&2;
 	OUT=$(createhostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "$RECORD");
+	if haserror "$OUT"; then
+		echo "Error creating $HOST $TYP record, aborting" >&2;
+		errorreasons "$OUT" >&2;
+		exit 10;
+	fi
 	echo "$OUT" | jq -r .message >&2;
 else
 	echo "Found record for host $HOST" >&2;
@@ -128,7 +133,7 @@ else
 	else
 		echo "$HOST.$DOMAIN has IP $CURRIP, need to change to $IP" >&2;
 		OUT=$(updatehostrecord "$GANDI_DYNADNS_PAT" "$DOMAIN" "$HOST" "$IP" "$RECORD");
-		if haserrors "$OUT"; then
+		if haserror "$OUT"; then
 			echo "Failed to change record $HOST" >&2;
 			echo "$OUT" | errorreasons >&2;
 			exit 8;

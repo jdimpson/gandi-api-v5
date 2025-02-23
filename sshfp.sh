@@ -35,7 +35,7 @@ while test $# -gt 0; do
 	shift;
 done
 
-VERBOSE=1
+#VERBOSE=1
 
 if test -z "$GANDI_DYNADNS_PAT"; then
 	echo "Please set env variable GANDI_DYNADNS_PAT to the Personal Access Token in your Gandi account that you intend to use for dyanamic DNS" >&2;
