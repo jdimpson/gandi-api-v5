@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # this script uses the liveDNS API, not the Domain API, at least currently
 # https://api.gandi.net/docs/livedns/
@@ -6,6 +6,7 @@
 haserrors() {
 	local STR="$1";
 	local jqstr='select(.status == "error")';
+	
 
 	if test -z "$STR"; then
 		jq -e "$jqstr" > /dev/null 2>&1;
@@ -55,6 +56,8 @@ getrecords() {
 		URL="https://api.gandi.net/v5/livedns/domains/$DOM/records?rrset_type=$TYP"
 	fi
 
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $TYP): $URL" >&2;
+
 	curl -sS \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
@@ -69,6 +72,7 @@ gethostrecord() {
 	local DOM="$2";
 	local NAM="$3";
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM"
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $TYP): $URL" >&2;
 	curl -sS \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
@@ -90,6 +94,7 @@ createhostrecord() {
 
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM";
 	DATA='{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}'
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $NAM, $IP, $TYP): $URL $DATA" >&2;
 
 	curl -sS -X POST \
 	  "$URL" \
@@ -113,10 +118,12 @@ updatehostrecord() {
 	fi
 
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM";
+	DATA='{"items":[{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}]}'
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $NAM, $IP, $TYP): $URL $DATA" >&2;
 	curl -sS -X PUT \
 	  "$URL" \
 	  -H "Authorization: Bearer $PAT" \
-	  -H "Content-type: application/json" -d '{"items":[{"rrset_type":"'$TYP'","rrset_values":["'$IP'"],"rrset_ttl":300}]}'
+	  -H "Content-type: application/json" -d "$DATA"
 	local R="$?";
 	echo;
 	return $R;
@@ -133,6 +140,7 @@ deletehostrecord() {
 	fi
 
 	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$NAM/$TYP";
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $NAM, $TYP): $URL $DATA" >&2;
 
 	curl -sS -X DELETE\
 	  "$URL" \
