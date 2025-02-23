@@ -3,7 +3,7 @@
 # this script uses the liveDNS API, not the Domain API, at least currently
 # https://api.gandi.net/docs/livedns/
 
-haserrors() {
+haserror() {
 	local STR="$1";
 	local jqstr='select(.status == "error")';
 	
