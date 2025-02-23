@@ -54,7 +54,7 @@ Where
 	ssh server key file is an optional file containing the desired SSH key to be added to the SSHFP record. If it is ommitted, the host will be directly contacted to get all of it's host keys, and a record will be made for each one.
 
 You must have GANDI_DYNADNS_PAT set as an environment variable, containing the PAT from your Gandi domain hosting account.
-You must ssh-keygen installed.
+You must ssh-keyscan installed.
 You must have curl installed.
 You must have jq installed.
 
@@ -86,9 +86,9 @@ if test -z "$FILE"; then
 fi
 
 F=
-if ! test -z "$FILE"; then
-	F="-f $FILE";
-fi
+#if ! test -z "$FILE"; then
+#	F="-f $FILE";
+#fi
 
 if ! test -z "$DELETE"; then
 	echo "Deleting all SSHFP records for $FQDN" >&2;
@@ -97,7 +97,8 @@ if ! test -z "$DELETE"; then
 fi
 
 # this is a bad hack. Need to work out way to naturally provide json strings to the gandi-api-v5 functions
-VALS=$(ssh-keygen -r "$FQDN" $F | while read h in sshfp one two hash; do
+#VALS=$(ssh-keygen -r "$FQDN" $F | while read h in sshfp one two hash; do
+VALS=$(ssh-keyscan -D "$FQDN" $F | while read h in sshfp one two hash; do
 	echo -n "$one $two $hash"'","';
 done; echo;);
 VALS=$(echo "$VALS" | sed -e 's/","$//');
