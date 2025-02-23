@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 THISDIR="$(dirname "$(readlink -f "$0")")"
 GANDI_FUNCS="gandi_v5_funcs.sh"
