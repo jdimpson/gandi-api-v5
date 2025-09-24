@@ -66,6 +66,25 @@ getrecords() {
 	echo;
 	return $R;
 }
+createcnamerecord() {
+	local PAT="$1";
+	local DOM="$2";
+	local NAM="$3";
+	local CNA="$4";
+	local TYP="CNAME";
+
+	URL="https://api.gandi.net/v5/livedns/domains/$DOM/records/$CNA";
+	DATA='{"rrset_type":"'$TYP'","rrset_values":["'$NAM'"],"rrset_ttl":300}'
+	test -z "$VERBOSE" || echo "$FUNCNAME(PAT, $DOM, $NAM, $CNA, $TYP): $URL $DATA" >&2;
+
+	curl -sS -X POST \
+	  "$URL" \
+	  -H "Authorization: Bearer $PAT" \
+	  -H "Content-type: application/json" -d "$DATA";
+	local R="$?";
+	echo;
+	return $R;
+}
 
 gethostrecord() {
 	local PAT="$1";
